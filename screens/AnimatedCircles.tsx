@@ -89,24 +89,48 @@ export function AnimatedCircles({}) {
     delayedTranslateX: redTranslateX,
     delayedTranslateY: redTranslateY,
   } = useDelayAnimatedTranslation({ x: blueTranslateX, y: blueTranslateY });
+  const { animatedStyle: greenAnimatedStyle } = useDelayAnimatedTranslation({ x: redTranslateX, y: redTranslateY });
+
+  const BlueCircle = () => {
+    return (
+      <Animated.View
+        style={[
+          styles.circle,
+          blueAnimatedStyle,
+        ]}
+      />
+    );
+  };
+  const RedCircle = () => {
+    return (
+      <Animated.View
+        style={[
+          styles.circle,
+          redAnimatedStyle,
+          { backgroundColor: 'red' },
+        ]}
+      />
+    );
+  };
+  const GreenCircle = () => {
+    return (
+      <Animated.View
+        style={[
+          styles.circle,
+          greenAnimatedStyle,
+          { backgroundColor: 'green' },
+        ]}
+      />
+    );
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1}}>
       <View style={styles.container}>
-        <Animated.View
-          style={[
-            styles.circle,
-            redAnimatedStyle,
-            { backgroundColor: 'red' },
-          ]}
-        />
+        <GreenCircle />
+        <RedCircle />
         <GestureDetector gesture={panGesture}>
-          <Animated.View
-            style={[
-              styles.circle,
-              blueAnimatedStyle,
-            ]}
-          />
+          <BlueCircle />
         </GestureDetector>
       </View>
     </GestureHandlerRootView>
