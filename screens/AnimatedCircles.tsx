@@ -18,7 +18,7 @@ import {
 } from 'react-native-gesture-handler';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const CIRCLE_SIZE = 80;
+const CIRCLE_SIZE = 100;
 
 const styles = StyleSheet.create({
   container: {
@@ -37,12 +37,13 @@ const styles = StyleSheet.create({
   },
 });
 
-type AnimatedTranslation = {
+type AnimatedTransformation = {
   x: SharedValue<number>,
   y: SharedValue<number>,
+  scale: SharedValue<number>;
 };
 
-const useDelayAnimatedTranslation = ({ x, y }: AnimatedTranslation) => {
+const useDelayedAnimatedTransform = ({ x, y, scale }: AnimatedTransformation) => {
   const delayedTranslateX = useDerivedValue(() => {
     return withSpring(x.value, {
       damping: 20,
@@ -61,6 +62,7 @@ const useDelayAnimatedTranslation = ({ x, y }: AnimatedTranslation) => {
       transform: [
         { translateX: delayedTranslateX.value },
         { translateY: delayedTranslateY.value },
+        { scale: scale.value },
       ],
     };
   });
@@ -68,19 +70,31 @@ const useDelayAnimatedTranslation = ({ x, y }: AnimatedTranslation) => {
   return { delayedTranslateX, delayedTranslateY, animatedStyle };
 };
 
-export function AnimatedCircles({}) {
+export function AnimatedCirclesScreen() {
+
+  const scale = useSharedValue(1);  
+  const pinchGesture = Gesture.Pinch()
+    .hitSlop({
+      horizontal: CIRCLE_SIZE * 2,
+      vertical: CIRCLE_SIZE * 2,
+    })
+    .onUpdate((event) => {
+      if (event.scale < 0.75) scale.value = 0.75;
+      else if (event.scale > 2) scale.value = 2;
+      else scale.value = event.scale;
+    });
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  const context = useSharedValue({ x: 0, y: 0 });
+  const translateContext = useSharedValue({ x: 0, y: 0 });
 
   const panGesture = Gesture.Pan()
     .onBegin(() => {
-      context.value = { x: translateX.value, y: translateY.value };
+      translateContext.value = { x: translateX.value, y: translateY.value };
     })
     .onUpdate((event) => {
-      translateX.value = event.translationX + context.value.x;
-      translateY.value = event.translationY + context.value.y;
+      translateX.value = event.translationX + translateContext.value.x;
+      translateY.value = event.translationY + translateContext.value.y;
     })
     .onEnd(() => {
       // Horisontal and vertical dampening from the screen edges, to prevent "losing" our circles beyond the screen edge.
@@ -101,13 +115,14 @@ export function AnimatedCircles({}) {
     animatedStyle: blueAnimatedStyle,
     delayedTranslateX: blueTranslateX,
     delayedTranslateY: blueTranslateY,
-  } = useDelayAnimatedTranslation({ x: translateX, y: translateY });
+  } = useDelayedAnimatedTransform({ x: translateX, y: translateY, scale });
   const {
     animatedStyle: redAnimatedStyle,
     delayedTranslateX: redTranslateX,
     delayedTranslateY: redTranslateY,
-  } = useDelayAnimatedTranslation({ x: blueTranslateX, y: blueTranslateY });
-  const { animatedStyle: greenAnimatedStyle } = useDelayAnimatedTranslation({ x: redTranslateX, y: redTranslateY });
+  } = useDelayedAnimatedTransform({ x: blueTranslateX, y: blueTranslateY, scale });
+  const { animatedStyle: greenAnimatedStyle } =
+    useDelayedAnimatedTransform({ x: redTranslateX, y: redTranslateY, scale });
 
   const BlueCircle = () => {
     return (
@@ -147,8 +162,10 @@ export function AnimatedCircles({}) {
       <SafeAreaView style={styles.container}>
         <GreenCircle />
         <RedCircle />
-        <GestureDetector gesture={panGesture}>
+        <GestureDetector gesture={pinchGesture}>
+          <GestureDetector gesture={panGesture}>
           <BlueCircle />
+          </GestureDetector>
         </GestureDetector>
       </SafeAreaView>
     </GestureHandlerRootView>
