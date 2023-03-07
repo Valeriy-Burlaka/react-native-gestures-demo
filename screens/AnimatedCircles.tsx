@@ -1,4 +1,8 @@
-import { Dimensions, StyleSheet, View } from 'react-native';
+import {
+  Dimensions,
+  StyleSheet,
+  SafeAreaView,
+} from 'react-native';
 
 import Animated, {
   useAnimatedStyle,
@@ -13,7 +17,7 @@ import {
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CIRCLE_SIZE = 80;
 
 const styles = StyleSheet.create({
@@ -78,6 +82,20 @@ export function AnimatedCircles({}) {
       translateX.value = event.translationX + context.value.x;
       translateY.value = event.translationY + context.value.y;
     })
+    .onEnd(() => {
+      // Horisontal and vertical dampening from the screen edges, to prevent "losing" our circles beyond the screen edge.
+      if (translateX.value > (SCREEN_WIDTH / 2 - CIRCLE_SIZE / 4)) {
+        translateX.value = SCREEN_WIDTH / 2 - CIRCLE_SIZE;
+      } else if (translateX.value < -(SCREEN_WIDTH / 2 - CIRCLE_SIZE / 4)) {
+        translateX.value = -(SCREEN_WIDTH / 2 - CIRCLE_SIZE);
+      }
+
+      if (translateY.value > (SCREEN_HEIGHT / 2 - CIRCLE_SIZE / 4)) {
+        translateY.value = SCREEN_HEIGHT / 2 - CIRCLE_SIZE;
+      } else if (translateY.value < -(SCREEN_HEIGHT / 2 - CIRCLE_SIZE / 4)) {
+        translateY.value = -(SCREEN_HEIGHT / 2 - CIRCLE_SIZE);
+      }
+    });
 
   const {
     animatedStyle: blueAnimatedStyle,
@@ -126,13 +144,13 @@ export function AnimatedCircles({}) {
 
   return (
     <GestureHandlerRootView style={{ flex: 1}}>
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <GreenCircle />
         <RedCircle />
         <GestureDetector gesture={panGesture}>
           <BlueCircle />
         </GestureDetector>
-      </View>
+      </SafeAreaView>
     </GestureHandlerRootView>
   );
 }
