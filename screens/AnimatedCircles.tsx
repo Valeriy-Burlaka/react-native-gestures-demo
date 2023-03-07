@@ -1,6 +1,6 @@
 import { Dimensions, StyleSheet, View } from 'react-native';
 
-import Animated, { useAnimatedStyle} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue} from 'react-native-reanimated';
 import {
   Gesture,
   GestureDetector,
@@ -14,6 +14,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   blueCircle: {
     backgroundColor: 'blue',
@@ -26,13 +28,38 @@ const styles = StyleSheet.create({
 
 export function AnimatedCircles({}) {
 
-  const panGesture = Gesture.Pan();
+  const originalPosition = useSharedValue({ x: 0, y: 0 });
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+
+  const panGesture = Gesture.Pan()
+    .onBegin(() => {
+      originalPosition.value = { x: translateX.value, y: translateY.value };
+    })
+    .onUpdate((event) => {
+      translateX.value = event.translationX + originalPosition.value.x;
+      translateY.value = event.translationY + originalPosition.value.y;
+    })
+
+  const animatedStyles = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+      ],
+    };
+  });
 
   return (
     <GestureHandlerRootView style={{ flex: 1}}>
       <View style={styles.container}>
         <GestureDetector gesture={panGesture}>
-          <Animated.View style={styles.blueCircle} />
+          <Animated.View
+            style={[
+              styles.blueCircle,
+              animatedStyles,
+            ]}
+          />
         </GestureDetector>
       </View>
     </GestureHandlerRootView>
