@@ -23,12 +23,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  blueCircle: {
+  circle: {
     backgroundColor: 'blue',
     borderRadius: CIRCLE_SIZE / 2,
     height: CIRCLE_SIZE,
     width: CIRCLE_SIZE,
     opacity: 0.8,
+    position: 'absolute',
   },
 });
 
@@ -78,15 +79,31 @@ export function AnimatedCircles({}) {
       translateY.value = event.translationY + context.value.y;
     })
 
-  const { animatedStyle: blueAnimatedStyle } = useDelayAnimatedTranslation({ x: translateX, y: translateY });
+  const {
+    animatedStyle: blueAnimatedStyle,
+    delayedTranslateX: blueTranslateX,
+    delayedTranslateY: blueTranslateY,
+  } = useDelayAnimatedTranslation({ x: translateX, y: translateY });
+  const {
+    animatedStyle: redAnimatedStyle,
+    delayedTranslateX: redTranslateX,
+    delayedTranslateY: redTranslateY,
+  } = useDelayAnimatedTranslation({ x: blueTranslateX, y: blueTranslateY });
 
   return (
     <GestureHandlerRootView style={{ flex: 1}}>
       <View style={styles.container}>
+        <Animated.View
+          style={[
+            styles.circle,
+            redAnimatedStyle,
+            { backgroundColor: 'red' },
+          ]}
+        />
         <GestureDetector gesture={panGesture}>
           <Animated.View
             style={[
-              styles.blueCircle,
+              styles.circle,
               blueAnimatedStyle,
             ]}
           />
