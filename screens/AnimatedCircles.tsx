@@ -1,6 +1,11 @@
 import { Dimensions, StyleSheet, View } from 'react-native';
 
-import Animated, { useAnimatedStyle, useSharedValue} from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useDerivedValue,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import {
   Gesture,
   GestureDetector,
@@ -28,24 +33,37 @@ const styles = StyleSheet.create({
 
 export function AnimatedCircles({}) {
 
-  const originalPosition = useSharedValue({ x: 0, y: 0 });
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
+  const context = useSharedValue({ x: 0, y: 0 });
 
   const panGesture = Gesture.Pan()
     .onBegin(() => {
-      originalPosition.value = { x: translateX.value, y: translateY.value };
+      context.value = { x: translateX.value, y: translateY.value };
     })
     .onUpdate((event) => {
-      translateX.value = event.translationX + originalPosition.value.x;
-      translateY.value = event.translationY + originalPosition.value.y;
+      translateX.value = event.translationX + context.value.x;
+      translateY.value = event.translationY + context.value.y;
     })
+
+  const delayedTranslateX = useDerivedValue(() => {
+    return withSpring(translateX.value, {
+      damping: 20,
+      stiffness: 200,
+    });
+  });
+  const delayedTranslateY = useDerivedValue(() => {
+    return withSpring(translateY.value, {
+      damping: 20,
+      stiffness: 200,
+    });
+  });
 
   const animatedStyles = useAnimatedStyle(() => {
     return {
       transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
+        { translateX: delayedTranslateX.value },
+        { translateY: delayedTranslateY.value },
       ],
     };
   });
