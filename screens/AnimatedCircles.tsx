@@ -5,6 +5,7 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
   withSpring,
+  type SharedValue,
 } from 'react-native-reanimated';
 import {
   Gesture,
@@ -31,6 +32,37 @@ const styles = StyleSheet.create({
   },
 });
 
+type AnimatedTranslation = {
+  x: SharedValue<number>,
+  y: SharedValue<number>,
+};
+
+const useDelayAnimatedTranslation = ({ x, y }: AnimatedTranslation) => {
+  const delayedTranslateX = useDerivedValue(() => {
+    return withSpring(x.value, {
+      damping: 20,
+      stiffness: 200,
+    });
+  });
+  const delayedTranslateY = useDerivedValue(() => {
+    return withSpring(y.value, {
+      damping: 20,
+      stiffness: 200,
+    });
+  });
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: delayedTranslateX.value },
+        { translateY: delayedTranslateY.value },
+      ],
+    };
+  });
+
+  return { delayedTranslateX, delayedTranslateY, animatedStyle };
+};
+
 export function AnimatedCircles({}) {
 
   const translateX = useSharedValue(0);
@@ -46,27 +78,7 @@ export function AnimatedCircles({}) {
       translateY.value = event.translationY + context.value.y;
     })
 
-  const delayedTranslateX = useDerivedValue(() => {
-    return withSpring(translateX.value, {
-      damping: 20,
-      stiffness: 200,
-    });
-  });
-  const delayedTranslateY = useDerivedValue(() => {
-    return withSpring(translateY.value, {
-      damping: 20,
-      stiffness: 200,
-    });
-  });
-
-  const animatedStyles = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: delayedTranslateX.value },
-        { translateY: delayedTranslateY.value },
-      ],
-    };
-  });
+  const { animatedStyle: blueAnimatedStyle } = useDelayAnimatedTranslation({ x: translateX, y: translateY });
 
   return (
     <GestureHandlerRootView style={{ flex: 1}}>
@@ -75,7 +87,7 @@ export function AnimatedCircles({}) {
           <Animated.View
             style={[
               styles.blueCircle,
-              animatedStyles,
+              blueAnimatedStyle,
             ]}
           />
         </GestureDetector>
